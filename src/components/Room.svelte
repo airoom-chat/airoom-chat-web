@@ -56,9 +56,11 @@
 
       div.className = 'conversation-item border-t-2 hover:bg-slate-200 px-2 py-1 rounded-md';
       div.innerHTML = `
-        <div class="conversation-link">
+        <div class="conversation-link flex">
           <a
+            class="flex-1"
             href="${url}"
+            
           >
             <div class="conversation-topic">
               ${topic}
@@ -68,10 +70,10 @@
             </div>
           </a>
           <div
-            class="text-right"
+            class="text-right w-14 flex items-center"
           >
-            <i id="${sid}-delete" class="bi bi-trash cursor-pointer"></i>
-            <i id="${sid}-editor" class="bi bi-pencil-square ps-1 cursor-pointer"></i>
+            <i id="${sid}-delete" class="bi bi-trash cursor-pointer "></i>
+            <i id="${sid}-editor" class="bi bi-pencil-square ps-1 cursor-pointer ms-1"></i>
           </div>
         </adiv>
       `;
@@ -86,14 +88,14 @@
             
       document.querySelector(`#${sid}-delete`)?.addEventListener('click', (e) => {
         e.preventDefault()
-        // 这里编写删除接口 TODO
+        showDialog('deleteDialog')
       })
 
       document.querySelector(`#${sid}-editor`)?.addEventListener('click', (e) => {
         e.preventDefault()
         const modal = document.getElementById('renameDialog') as HTMLDialogElement;
         modal.showModal()
-        // 这里编辑重命名标题 TODO
+        showDialog('renameDialog')
       })
     }
 
@@ -155,10 +157,29 @@
     modal.close()
   }
 
+
+  const closeDialog = (id: string) => {
+    const modal = document.getElementById(id) as HTMLDialogElement;
+    modal.close();
+  }
+
+  const showDialog = (id: string) => {
+    const modal = document.getElementById(id) as HTMLDialogElement;
+    modal.showModal()
+  }
+
   const cancelRenameDialog = (e: any) => {
     e.preventDefault()
-    const modal = document.getElementById('renameDialog') as HTMLDialogElement;
-    modal.close();
+    closeDialog('renameDialog')
+  }
+
+  const confirmDeleteDialog = () => {
+    // 此处编写删除逻辑
+  }
+
+  const cancelDeleteDialog = (e: any) => {
+    e.preventDefault()
+    closeDialog('deleteDialog')
   }
 </script>
 
@@ -185,6 +206,22 @@
           <div class="flex justify-center items-center">
             <button type="submit" class="btn mr-3">Submit</button>
             <a href="/" on:click={cancelRenameDialog}>Cancel</a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </dialog>
+
+  <dialog id="deleteDialog" class="modal">
+    <div class="modal-box">
+      <h3 class="font-bold text-lg mb-6">系统消息</h3>
+      是否确认删除会话 ?
+      <div class="modal-action flex justify-center">
+        <form method="dialog" on:submit|preventDefault={confirmDeleteDialog}>
+          <div class="flex justify-center items-center"></div>
+          <div class="flex justify-center items-center">
+            <button type="submit" class="btn mr-3">Submit</button>
+            <a href="/" on:click={cancelDeleteDialog}>Cancel</a>
           </div>
         </form>
       </div>
