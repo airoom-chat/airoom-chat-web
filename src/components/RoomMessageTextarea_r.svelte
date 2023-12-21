@@ -19,10 +19,10 @@
 </script>
 
 <div class="msg-bottom sticky bottom-0">
-  <div class="border flex items-center">
+  <div class="flex items-center">
     <textarea
       id="message-textarea"
-      class="textarea textarea-md leading-normal text-base w-9/12 resize-none !outline-none"
+      class="textarea textarea-md leading-normal text-base w-9/12 resize-none border-none focus:outline-none focus:ring-0"
       placeholder="Write message ..."
       on:keydown={handleKeyDown}
     ></textarea>

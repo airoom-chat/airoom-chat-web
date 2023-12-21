@@ -20,7 +20,6 @@ export const getRoom_R = (info: any) => {
         },
       });
       const data = await response.json();
-      console.log('1104 data:: ', data);
       if (data.statusCode === 200) {
         resolve(data);
       } else {

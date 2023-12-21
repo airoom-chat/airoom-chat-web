@@ -2,10 +2,12 @@
 <script lang="ts">
 
   import SvgChatGPT35 from './SvgChatGPT35.svelte';
+  import SvgGoogle from './SvgGoogle.svelte';
   import { API_ANONYMOUS } from '../lib/constants';
   import { browser } from '$app/environment';
 
   export let roomTitle: string = '';
+  export let botName: string = '';
 
   // End the current chat, and start a new one.
   async function newChat() {
@@ -44,10 +46,14 @@
       <div class="border-b-2">
         <div class="flex room-role h-30 mx-5 my-3">
           <div class="chatgpt-3.5-icon mr-3">
-            <SvgChatGPT35 />
+            {#if botName === 'gpt-3.5-turbo'}
+              <SvgChatGPT35 />
+            {:else}
+              <SvgGoogle />
+            {/if}
           </div>
           <div class="role-name">
-            gpt-3.5-turbo
+            {botName}
           </div>
         </div>
       </div>

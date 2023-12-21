@@ -5,6 +5,15 @@
   import { API } from '../lib/constants';
   import { browser } from '$app/environment';
 
+  import { roominfo } from '../stores';
+  let b_type = 0;
+  roominfo.subscribe((value) => {
+    if (value) {
+      const { bot_type } = value;
+      b_type = bot_type;
+    }
+  });
+
   export let roomTitle: string = '';
   export let botName: string = 'gpt-3.5-turbo';
 
@@ -64,9 +73,11 @@
       </div>
       <div class="tools h-14 flex justify-center">
         <div class="clear-button w-40">
+          {#if b_type === 0}
           <button class="btn btn-accent btn-sm lowercase" on:click={newChat}>
             New chat
           </button>
+          {/if}
         </div>
       </div>
     </div>

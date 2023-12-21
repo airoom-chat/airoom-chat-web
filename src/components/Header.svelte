@@ -58,9 +58,12 @@
             </label>
             <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
             <ul tabindex="0" class="menu dropdown-content z-[1] p-2 shadow bg-base-100 rounded-lg w-40 mt-5">
+              <li>
+                <a href="/usage">Usage</a>
+              </li>
               <!-- svelte-ignore a11y-click-events-have-key-events -->
               <!-- svelte-ignore a11y-no-noninteractive-element-interactions -->
-              <li on:click={logout}>Log out</li> 
+              <li on:click={logout}><a href="#">Log out</a></li> 
             </ul>
           </div>
         </div>

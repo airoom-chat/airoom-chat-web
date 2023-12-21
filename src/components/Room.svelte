@@ -14,6 +14,7 @@
   let loading = writable(true);
 
   let roomName = '';
+  let botName = '';
   import { browser } from '$app/environment';
   if (browser) {
     //const user_uuid = localStorage.getItem('user_uuid');
@@ -29,12 +30,15 @@
       window.location.hash = url;
     }
 
+    /**
+     * 添加聊天窗口的会话信息
+     */
     const showConversation = (session: any) => {
       let topic = session.topic === '' ? 'Untitled' : session.topic;
       const uid = session.user_uuid;
       const rid = session.room_uuid;
       const sid = session.uuid;
-      const url = `/r?uid=${uid}&rid=${rid}&sid=${sid}`;
+      const url = `/room?uid=${uid}&rid=${rid}&sid=${sid}`;
       // convert to local time
       //const localTime = new Date(session.created_at);
       //const time = localTime.toISOString().split('T')[1].split('.')[0];
@@ -50,17 +54,30 @@
 
       const wrap = document.getElementById('conversation-list-wrap') as HTMLDivElement;
       const div = document.createElement('div');
+
       div.className = 'conversation-item border-t-2 hover:bg-slate-200 px-2 py-1 rounded-md';
       div.innerHTML = `
-        <a href="${url}" class="conversation-link">
-          <div class="conversation-topic">
-            ${topic}
+        <div class="conversation-link flex">
+          <a
+            class="flex-1"
+            href="${url}"
+          >
+            <div class="conversation-topic">
+              ${topic}
+            </div>
+            <div class="conversation-time">
+              ${time}
+            </div>
+          </a>
+          <div
+            class="text-right w-14 flex items-center hidden"
+          >
+            <i id="${sid}-delete" class="bi bi-trash cursor-pointer "></i>
+            <i id="${sid}-editor" class="bi bi-pencil-square ps-1 cursor-pointer ms-1"></i>
           </div>
-          <div class="conversation-time">
-            ${time}
-          </div>
-        </a>
+        </div>
       `;
+
       const alink = div.querySelector('a');
       if (alink) {
         alink.addEventListener('click', (e) => {
@@ -68,6 +85,20 @@
         }, false);
       }
       wrap.appendChild(div);
+
+      //if (div) {
+      //div.querySelector(`#${sid}-delete`)?.addEventListener('click', (e) => {
+      //  e.preventDefault()
+      //  showDialog('deleteDialog')
+      //})
+      //}
+
+      //div.querySelector(`#${sid}-editor`)?.addEventListener('click', (e) => {
+      //  e.preventDefault()
+      //  const modal = document.getElementById('renameDialog') as HTMLDialogElement;
+      //  modal.showModal()
+      //  showDialog('renameDialog')
+      //})
     }
 
     getRoom({user_uuid, room_uuid, session_uuid}).then((room: any) => {
@@ -77,19 +108,27 @@
         return;
       }
 
+      // Session 可能是新创建的，因此需要更新 localStorage
+      const sid = room.session_uuid;
+
+      if (room.session_stat && room.session_stat === -2) {
+        window.location.href = `/room?uid=${user_uuid}&rid=${room_uuid}&sid=${sid}`;
+      }
+
       roomName = room.room_name;
+      botName = room.bot_name;
 
       // Show conversations on sidebar
-      for (let i=0; i < room.sessions.length; i++) {
-        showConversation(room.sessions[i]);
-      }
+      room.sessions?.forEach((session: any) => {
+        showConversation(session);
+      })
 
       // Update the current session.
       // Save user_uuid, room_uuid and session_uuid to localStorage
-      if (room.sessions.length > 0 && user_uuid && room_uuid && session_uuid) {
+      if (room.sessions.length > 0 && user_uuid && room_uuid && sid) {
         localStorage.setItem('user_uuid', user_uuid);
         localStorage.setItem('room_uuid', room_uuid);
-        localStorage.setItem('session_uuid', session_uuid);
+        localStorage.setItem('session_uuid', sid);
       }
 
       // stat == 2
@@ -122,6 +161,36 @@
       textarea.focus();
     });
   }
+
+  const confirmRenameDialog = () => {
+    const modal = document.getElementById('renameDialog') as HTMLDialogElement;
+    modal.close()
+  }
+
+
+  const closeDialog = (id: string) => {
+    const modal = document.getElementById(id) as HTMLDialogElement;
+    modal.close();
+  }
+
+  const showDialog = (id: string) => {
+    const modal = document.getElementById(id) as HTMLDialogElement;
+    modal.showModal()
+  }
+
+  const cancelRenameDialog = (e: any) => {
+    e.preventDefault()
+    closeDialog('renameDialog')
+  }
+
+  const confirmDeleteDialog = () => {
+    // 此处编写删除逻辑
+  }
+
+  const cancelDeleteDialog = (e: any) => {
+    e.preventDefault()
+    closeDialog('deleteDialog')
+  }
 </script>
 
 <div class="grid grid-cols-1 xl:grid-cols-12 h-full">
@@ -134,7 +203,39 @@
 
       <RoomSide
         roomTitle={roomName}
+        botName={botName}
       />
     </div>
   </div>
+  <dialog id="renameDialog" class="modal">
+    <div class="modal-box">
+      <h3 class="font-bold text-lg mb-6">修改会话标题</h3>
+      <textarea class="textarea textarea-bordered w-full" placeholder="请输入新标题信息......"></textarea>
+      <div class="modal-action flex justify-center">
+        <form method="dialog" on:submit|preventDefault={confirmRenameDialog}>
+          <div class="flex justify-center items-center"></div>
+          <div class="flex justify-center items-center">
+            <button type="submit" class="btn mr-3">Submit</button>
+            <a href="/" on:click={cancelRenameDialog}>Cancel</a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </dialog>
+
+  <dialog id="deleteDialog" class="modal">
+    <div class="modal-box">
+      <h3 class="font-bold text-lg mb-6">系统消息</h3>
+      是否确认删除会话 ?
+      <div class="modal-action flex justify-center">
+        <form method="dialog" on:submit|preventDefault={confirmDeleteDialog}>
+          <div class="flex justify-center items-center"></div>
+          <div class="flex justify-center items-center">
+            <button type="submit" class="btn mr-3">Submit</button>
+            <a href="/" on:click={cancelDeleteDialog}>Cancel</a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </dialog>
 </div>

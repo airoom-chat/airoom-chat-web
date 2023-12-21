@@ -2,19 +2,21 @@
 <script lang="ts">
   import { loader } from './loader';
   import { writable } from 'svelte/store';
+  import { roominfo } from '../stores';
   import { getRoom_R } from '$lib/accessRoom_r';
   import RoomDialogBox from './RoomDialogBox_r.svelte';
   import RoomSide from './RoomSide_r.svelte';
   import { scrollToBottom } from '../lib/scrollToBottom';
-  import { sendMessageToLLM } from '$lib/sendMessageToLLM';
+  import { sendMessageToLLM } from '$lib/sendMessageToLLM_r';
   import { showUserMessage } from '$lib/showUserMessage';
-  import { showChatGPTMessage } from '$lib/sendMessageToLLM';
+  import { showChatGPTMessage } from '$lib/sendMessageToLLM_r';
   import { showEnd } from '$lib/showEnd';
 
   let loading = writable(true);
 
   let roomName = '';
   let botName = '';
+  let botType = 0;
   import { browser } from '$app/environment';
   if (browser) {
     const searchParams = new URLSearchParams(window.location.search);
@@ -76,6 +78,8 @@
 
       roomName = room.room_name;
       botName = room.bot_name || 'gpt-3.5-turbo';
+      botType = room.bot_type || 0;
+      //const threadId = room.thread_id || '';
 
       // Show conversations on sidebar
       for (let i=0; i < room.sessions.length; i++) {
@@ -88,6 +92,15 @@
         localStorage.setItem('room_uuid_r', room_uuid_r);
         localStorage.setItem('session_uuid_r', session_uuid_r);
       }
+
+      // Writable
+      const info = {
+        rid: room_uuid_r,
+        sid: session_uuid_r,
+        bot_type: botType,
+      }
+      roominfo.update(n => info);
+      //export const roominfo = writable(info);
 
       // stat == 2
       if (room.session_stat && room.session_stat === 2) {

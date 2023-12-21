@@ -12,6 +12,13 @@ export const API = {
   session_end: `${api_root}/session/end`,
   message: `${api_root}/message`,
   model: `${api_root}/model`,
+  usage: `${api_root}/usage`,
+  bot: `${api_root}/bot`,
+  bots: `${api_root}/bots`,
+  assistant_thread: `${api_root}/assistant/thread`,
+  assistant_message: `${api_root}/assistant/message`,
+  assistant_run: `${api_root}/assistant/run`,
+  ws: `ws://35.90.240.37:8081`,
 };
 
 // Anonymous
@@ -24,6 +31,8 @@ export const API_ANONYMOUS = {
   session_stat: `${api_root_anonymous}/session/stat`,
   session_end: `${api_root_anonymous}/session/end`,
   message: `${api_root_anonymous}/message`,
+  bot: `${api_root_anonymous}/bot`,
+  bots: `${api_root_anonymous}/bots`,
 };
 
 // Svg
@@ -120,3 +129,4 @@ export const svgHouse = `
     <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12l8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25" />
   </svg>
 `;
+

@@ -14,7 +14,7 @@ const config = {
       strict: true
     }),
     prerender: {
-      entries: ['/', '/r', '/room', '/model', '/login', '/signup', '/confirm'],
+      entries: ['/', '/b', '/usage', '/r', '/room', '/model', '/login', '/signup', '/confirm'],
     },
   }
 };

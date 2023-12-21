@@ -3,6 +3,7 @@ import { scrollToBottom } from './scrollToBottom';
 import { svgChatGPT, svgToken, svgTime, svgCopy, svgCopy2, API} from './constants';
 import { showUserMessage } from './showUserMessage';
 import { showEnd } from './showEnd';
+import { roominfo } from '../stores'
 
 // Copy gpt message
 function copyGPTMessage(ev: MouseEvent) {
@@ -108,6 +109,27 @@ function showLoadingGif() {
   return div;
 }
 
+function showAnAnswer(answer: string) {
+  //const loading = document.querySelector('.loading') as HTMLDivElement;
+  //loading.style.display = 'block';
+  const msgpage = document.querySelector('.msg-page') as HTMLDivElement;
+  let div = document.createElement('div');
+  div.className = 'received-chats flex my-5 mr-10';
+    //<div class="received-msg bg-gray-100">
+  div.innerHTML = `
+    <div class="received-chats-img mr-3 ml-5">
+      ${svgChatGPT}
+    </div>
+    <div class="received-msg">
+      ${answer}
+    </div>
+  `;
+
+  msgpage.appendChild(div);
+  scrollToBottom();
+  return div;
+}
+
 // Return child for message presentation.
 function gptMessageReplaceLoadingGif(gptMessageBox: HTMLDivElement) {
   let div = document.createElement('div');
@@ -154,6 +176,88 @@ export function showChatGPTMessage(msg: string = '') {
   return div;
 }
 
+// Talk to Assistant
+async function talkToAssistant(data: any, access_token: string, gptMessageBox: HTMLDivElement) {
+  data.timestamp = Math.floor(Date.now() / 1000);
+  console.log('data: ', data)
+  const result = await fetch(API.assistant_message, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${access_token}`,
+    },
+    body: JSON.stringify(data),
+  });
+  const resultData = await result.json();
+  console.log('resuL: ', resultData)
+  if (resultData.statusCode === 200) {
+    const info = {
+      thread_id: resultData.thread_id,
+      run_id: resultData.run_id,
+      access_token: access_token,
+    }
+    // Request run status
+    const requestRunStatus = (count: number, info: any) => {
+      console.log('count: ', count)
+      if (count > 30) {
+        console.log('cancel requestRunStatus')
+        return;
+      }
+
+      setTimeout(async () => {
+        const url = `${API.assistant_run}?thread_id=${info.thread_id}&run_id=${info.run_id}&timestamp=${data.timestamp}`;
+        const r = await fetch(url, {
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${info.access_token}`,
+          }
+        });
+        const d = await r.json();
+        if (d && d.statusCode === 200) {
+          console.log('donel le')
+          console.log('d: ', d)
+          for (let i = 0; i < d.answers.length; i++) {
+            const answer = d.answers[i];
+            if (i === 0) {
+              const aiSay = gptMessageReplaceLoadingGif(gptMessageBox);
+              aiSay.textContent = answer;
+            } else {
+              showAnAnswer(answer);
+            }
+            scrollToBottom();
+          }
+        } else {
+          requestRunStatus(count + 1, info);
+        }
+      }, 1000 + Math.floor(Math.random() * 5) * 1000);
+    }
+
+    // Check run
+    requestRunStatus(0, info);
+  }
+}
+
+function talkToAssistant_ws() {
+  console.log('inside: talkToAssistant');
+  /*
+  console.log('API.ws: ', API.ws)
+  const socket = new WebSocket(API.ws);
+
+  socket.addEventListener('open', (event) => {
+    console.log('Connected to WebSocket server');
+    socket.send('Hello, server!');
+  });
+
+  socket.addEventListener('message', (event) => {
+    console.log('Message from server:', event.data);
+  });
+
+  socket.addEventListener('close', (event) => {
+    console.log('Disconnected from WebSocket server');
+  });
+  */
+}
+
 /**
  * Send message.
  * Scenario 1: user input message, and click Enter
@@ -191,19 +295,33 @@ export function sendMessageToLLM(message: string = '') {
     return;
   }
 
-  // show loading
-  const gptMessageBox = showLoadingGif();
-  const gptMessageBoxInbox = gptMessageBox.querySelector('.received-msg') as HTMLDivElement;
-
-  // Timer
-  const timerStart = Date.now();
-
-  // Send message to server
   const data = {
     prompt: message,
     rid: room_uuid,
     sid: session_uuid,
   }
+
+  // show loading
+  const gptMessageBox = showLoadingGif();
+  const gptMessageBoxInbox = gptMessageBox.querySelector('.received-msg') as HTMLDivElement;
+
+  // Is assistant?
+  let botType = 0;
+  roominfo.subscribe((val) => {
+    //console.log('roominfo: ', val)
+    botType = val.bot_type;
+  });
+  if (botType === 1) {
+    talkToAssistant(data, access_token, gptMessageBoxInbox);
+    return;
+  }
+
+  // Not assistant, is a model.
+
+  // Timer
+  const timerStart = Date.now();
+
+  // Send message to server
   fetch(API.message, {
     method: 'POST',
     headers: {

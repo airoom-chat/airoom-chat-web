@@ -2,6 +2,7 @@
   import { getFingerprint } from '$lib/fingerprint';
   import { API, API_ANONYMOUS } from '$lib/constants';
   import { browser } from '$app/environment';
+//  import { bots } from '../stores.js';
 
   // User fingerprint
   async function get_user_uuid() {
@@ -77,12 +78,21 @@
   }
 
   // LLMs
-  function populate_llms(llms: any) {
+  function populate_bots(llms: any) {
     const llms_wrap = document.getElementById('llms-wrap') as HTMLDivElement;
 
+    let published_at = '2021-09';
+
     llms.forEach((llm: any) => {
+      if (llm.name === 'gpt-4-1106-preview') {
+        published_at = '2023-04';
+      } else if (llm.name === 'gpt-3.5-turbo-16k') {
+        published_at = '2021-09';
+      } else {
+        published_at = '2023-11';
+      }
       const llm_div = document.createElement('a') as HTMLAnchorElement;
-      llm_div.href = `/model?mid=${llm.uuid}`;
+      llm_div.href = `/b?id=${llm.uuid}`;
       llm_div.classList.add(
         'llm-wrap', 'border', 'border-gray-300', 'rounded-lg', 'p-4', 'shadow-md',
         'hover:bg-gray-200', 'transition', 'duration-300', 'ease-in-out', 'cursor-pointer'
@@ -95,24 +105,28 @@
           <div class="llm-name">${llm.name}</div>
         </div>
         <div class="llm-body mt-4">
-          <div class="llm-vender">${llm.vender}</div>
-          <div class="llm-published-at">${llm.published_at}</div>
+          <div class="llm-vender">AIRoom</div>
+          <div class="llm-published-at">${published_at}</div>
         </div>
       `;
       llms_wrap.appendChild(llm_div);
     });
   }
 
-  function populate_content(data: any) {
-    const rooms = data.rooms;
-    populate_rooms(rooms);
-
-    const llms = data.llms;
-    populate_llms(llms);
-  }
 
   import { onMount } from 'svelte';
   onMount(async () => {
+    // Public bots
+    try {
+      const publicBots = await fetch(API_ANONYMOUS.bots);
+      const botsData = await publicBots.json();
+      if (botsData && botsData.bots && botsData.bots.length > 0) {
+        populate_bots(botsData.bots);
+      }
+    } catch (error) {
+      console.error('Error:', error);
+    }
+
     let data = {
       rooms: [
         {
@@ -141,6 +155,22 @@
       ]
     }
 
+    try {
+      // Get playground rooms for the browser.
+      const user_uuid = await get_user_uuid();
+      const playgrounds = await fetch(`${API_ANONYMOUS.room}?user_uuid=${user_uuid}`)
+      const pgs = await playgrounds.json()
+      for (let i = 0; i < pgs.rooms.length; i++) {
+        pgs.rooms[i]['url'] = `/room?uid=${user_uuid}&rid=${pgs.rooms[i].uuid}`
+        pgs.rooms[i]['avatar'] = '/images/playground.png'
+        pgs.rooms[i]['updated_at'] = pgs.rooms[i].bot_name
+      }
+      populate_rooms(pgs.rooms);
+    } catch (error) {
+      console.error('Error:', error);
+    }
+
+    /* abandoned
     try {
       const user_uuid = await get_user_uuid();
       const room_uuid = get_room_uuid();
@@ -187,10 +217,10 @@
 
         populate_rooms(data.rooms);
       }
-      populate_llms(data.llms);
     } catch (error) {
       console.error('Error:', error);
     }
+    */
   })
 
   import ModalNewRoom from '../components/ModalNewRoom.svelte';
@@ -280,7 +310,7 @@
     </div>
     <div class="section">
       <div class="mt-8 mb-5 border-b">
-        <h2 class="text-2xl font-bold text-gray-800">Models</h2>
+        <h2 class="text-2xl font-bold text-gray-800">AIs</h2>
       </div>
       <div id="llms-wrap" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
         {#each blockArray as _, i}
@@ -297,14 +327,6 @@
           </div>
         </div>
         {/each}
-      </div>
-    </div>
-    <div class="section mt-8 ">
-      <div class="my-8 border-b">
-        <h2 class="text-2xl font-bold text-gray-800">Assistants</h2>
-      </div>
-      <div id="assistants-wrap" class="flex items-center justify-center">
-        <div>Coming soon</div>
       </div>
     </div>
   </div>
