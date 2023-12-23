@@ -30,6 +30,7 @@ export const API_ANONYMOUS = {
   session: `${api_root_anonymous}/session`,
   session_stat: `${api_root_anonymous}/session/stat`,
   session_end: `${api_root_anonymous}/session/end`,
+  session_clear: `${api_root_anonymous}/session/clear`,
   message: `${api_root_anonymous}/message`,
   bot: `${api_root_anonymous}/bot`,
   bots: `${api_root_anonymous}/bots`,
