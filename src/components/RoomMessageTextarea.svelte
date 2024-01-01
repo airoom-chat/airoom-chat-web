@@ -1,7 +1,8 @@
 
 <script lang="ts">
   import { sendMessageToLLM } from '$lib/sendMessageToLLM'
-  import SvgTrash from './SvgTrash.svelte'
+  import SvgTrash from './SvgTrash.svelte';
+  import SvgEraser from './SvgEraser.svelte';
   import { API_ANONYMOUS } from '$lib/constants';
 
   function clearSession() {
@@ -61,17 +62,19 @@
 </script>
 
 
-<div class="msg-bottom sticky bottom-0 border-t ">
+<div class="msg-bottom sticky bottom-0 border-t">
   <div class="flex items-center pt-1">
     <div class="w-9/12">
-      <div class="opacity-50 grid justify-items-end">
-        <button class="btn btn-sm cursor-pointer tooltip normal-case" data-tip="Clear session" on:click={clearSession}>
-          <SvgTrash />
+      <div class="grid justify-items-end">
+        <button class="btn btn-sm cursor-pointer tooltip normal-case opacity-50 hover:opacity-90"
+                data-tip="Clear session" on:click={clearSession}>
+          <SvgEraser />
         </button>
       </div>
       <textarea
         id="message-textarea"
-        class="textarea textarea-md leading-normal text-base resize-none border-none focus:outline-none focus:ring-0"
+        class="textarea textarea-md leading-normal text-base resize-none border-none w-full
+               focus:outline-none focus:ring-0"
         placeholder="Write message ..."
         on:keydown={handleKeyDown}
       ></textarea>

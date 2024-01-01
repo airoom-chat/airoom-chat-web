@@ -10,11 +10,15 @@
   import { showUserMessage } from '$lib/showUserMessage';
   import { showChatGPTMessage } from '$lib/sendMessageToLLM';
   import { showEnd } from '$lib/showEnd';
+  import { svgTrash, API_ANONYMOUS } from '$lib/constants';
 
   let loading = writable(true);
 
   let roomName = '';
   let botName = '';
+  let user_uuid = '';
+  let room_uuid = '';
+  let selectedSessionUuid = '';
   import { browser } from '$app/environment';
   if (browser) {
     //const user_uuid = localStorage.getItem('user_uuid');
@@ -22,16 +26,17 @@
     //const session_uuid = localStorage.getItem('session_uuid');
 
     const searchParams = new URLSearchParams(window.location.search);
-    const user_uuid = searchParams.get('uid') || '';
-    const room_uuid = searchParams.get('rid') || '';
+    user_uuid = searchParams.get('uid') || '';
+    room_uuid = searchParams.get('rid') || '';
     const session_uuid = searchParams.get('sid') || '';
+    selectedSessionUuid = ''; // To rename, delete
 
     const refreshHash = (url: string) => {
       window.location.hash = url;
     }
 
     /**
-     * 添加聊天窗口的会话信息
+     * Add chat information
      */
     const showConversation = (session: any) => {
       let topic = session.topic === '' ? 'Untitled' : session.topic;
@@ -53,27 +58,30 @@
       const time = year + '-' + month + '-' + day + ' ' + hour + ':' + minute + ':' + second;
 
       const wrap = document.getElementById('conversation-list-wrap') as HTMLDivElement;
-      const div = document.createElement('div');
+      const div = document.createElement('div') as HTMLDivElement;
 
-      div.className = 'conversation-item border-t-2 hover:bg-slate-200 px-2 py-1 rounded-md';
+      div.className = 'conversation-item border-t-2 px-2 py-1 rounded-md';
       div.innerHTML = `
-        <div class="conversation-link flex">
+        <div class="conversation-link flex" id="s${sid}-wrap">
           <a
-            class="flex-1"
+            class="flex-1 hover:bg-slate-200"
             href="${url}"
           >
             <div class="conversation-topic">
               ${topic}
             </div>
-            <div class="conversation-time">
+            <div class="conversation-time text-sm opacity-70">
               ${time}
             </div>
           </a>
           <div
-            class="text-right w-14 flex items-center hidden"
+            class="text-right w-14 flex items-center ml-2"
           >
-            <i id="${sid}-delete" class="bi bi-trash cursor-pointer "></i>
-            <i id="${sid}-editor" class="bi bi-pencil-square ps-1 cursor-pointer ms-1"></i>
+            <span id="s${sid}-delete"
+              class="tooltip opacity-40 hover:opacity-90 cursor-pointer" data-tip="Delete session"
+            >
+              ${svgTrash}
+            </span>
           </div>
         </div>
       `;
@@ -86,12 +94,15 @@
       }
       wrap.appendChild(div);
 
-      //if (div) {
-      //div.querySelector(`#${sid}-delete`)?.addEventListener('click', (e) => {
-      //  e.preventDefault()
-      //  showDialog('deleteDialog')
-      //})
-      //}
+      //if (div && (typeof div.querySelector === 'function')) {
+      if (div) {
+        div.querySelector(`#s${sid}-delete`)?.addEventListener('click', (e) => {
+          e.preventDefault()
+
+          selectedSessionUuid = sid;
+          showDialog('deleteDialog')
+        })
+      }
 
       //div.querySelector(`#${sid}-editor`)?.addEventListener('click', (e) => {
       //  e.preventDefault()
@@ -160,6 +171,7 @@
       const textarea = document.getElementById('message-textarea') as HTMLTextAreaElement;
       textarea.focus();
     });
+
   }
 
   const confirmRenameDialog = () => {
@@ -183,8 +195,38 @@
     closeDialog('renameDialog')
   }
 
-  const confirmDeleteDialog = () => {
-    // todo:
+  const confirmDeleteDialog = async () => {
+    const uid = user_uuid;
+    const rid = room_uuid;
+    const sid = selectedSessionUuid;
+    if (uid && rid && sid && uid.length > 10 && rid.length > 10 && sid.length > 10) {
+      try {
+        const url = `${API_ANONYMOUS.session_delete}?uid=${uid}&rid=${rid}&sid=${sid}`;
+        const resp = await fetch(url);
+        const result = await resp.json();
+        console.log('result: ', result)
+        if (result.statusCode === 200) {
+          console.log('')
+          const div = document.querySelector(`#s${sid}-wrap`) as HTMLDivElement;
+          console.log('div: ', div)
+          if (div) {
+            console.log('remove')
+            div.remove();
+            closeDialog('deleteDialog')
+          }
+        } else if (result.statusCode === 1015) {
+          const errinfo = document.querySelector('#deleteErrorInfo') as HTMLDivElement;
+          errinfo.innerHTML = 'Error! Can\'t delete the last session.';
+          errinfo.classList.remove('hidden');
+        } else {
+          console.error('Error! response: ', result);
+        }
+      } catch (e) {
+        console.error('Error! e: ', e);
+      }
+    } else {
+      console.error('Error! uid, rid or sid is null');
+    }
   }
 
   const cancelDeleteDialog = (e: any) => {
@@ -209,14 +251,14 @@
   </div>
   <dialog id="renameDialog" class="modal">
     <div class="modal-box">
-      <h3 class="font-bold text-lg mb-6">修改会话标题</h3>
-      <textarea class="textarea textarea-bordered w-full" placeholder="请输入新标题信息......"></textarea>
+      <h3 class="font-bold text-lg mb-6">Session Title</h3>
+      <textarea class="textarea textarea-bordered w-full" placeholder="Title"></textarea>
       <div class="modal-action flex justify-center">
         <form method="dialog" on:submit|preventDefault={confirmRenameDialog}>
           <div class="flex justify-center items-center"></div>
           <div class="flex justify-center items-center">
             <button type="submit" class="btn mr-3">Submit</button>
-            <a href="/" on:click={cancelRenameDialog}>Cancel</a>
+            <a href="#" on:click={cancelRenameDialog}>Cancel</a>
           </div>
         </form>
       </div>
@@ -225,16 +267,21 @@
 
   <dialog id="deleteDialog" class="modal">
     <div class="modal-box">
-      <h3 class="font-bold text-lg mb-6">系统消息</h3>
-      是否确认删除会话 ?
+      <h3 class="font-bold text-lg mb-6">Confirm</h3>
+        Are you sure to delete this session?
       <div class="modal-action flex justify-center">
         <form method="dialog" on:submit|preventDefault={confirmDeleteDialog}>
           <div class="flex justify-center items-center"></div>
           <div class="flex justify-center items-center">
             <button type="submit" class="btn mr-3">Submit</button>
-            <a href="/" on:click={cancelDeleteDialog}>Cancel</a>
+            <a href="#" on:click={cancelDeleteDialog}>Cancel</a>
           </div>
         </form>
+      </div>
+      <div class="text-red-600 min-h-6">
+        <div id="deleteErrorInfo" class="hidden">
+          Error!
+        </div>
       </div>
     </div>
   </dialog>

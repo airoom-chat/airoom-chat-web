@@ -228,7 +228,7 @@ export function sendMessageToLLM(message: string = '') {
     } else {
 
     let reader = response.body.getReader();
-    let decoder = new TextDecoder();
+    let decoder = new TextDecoder('utf-8');
     //const aiMessage = showChatGPTMessage();
     //const aiSay = aiMessage.querySelector('#test18') as HTMLParagraphElement;
     const aiSay = gptMessageReplaceLoadingGif(gptMessageBoxInbox);
