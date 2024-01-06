@@ -39,7 +39,7 @@
 </script>
 
 
-  <div class="navbar bg-base-100 border-b-2">
+  <div class="navbar bg-base-100 border-b-2 min-h-12 p-0">
     <div class="flex-1">
       <a href="/" class="btn btn-ghost normal-case text-xl gap-[0.1rem]
                          hover:bg-transparent">

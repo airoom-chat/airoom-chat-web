@@ -5,7 +5,7 @@
   import { onMount } from 'svelte';
   onMount(() => {
     const setHeight = () => {
-      const chatBoxHeight = window.innerHeight - 66 - 50 - 26 - 38;
+      const chatBoxHeight = window.innerHeight - 66 - 50 - 26 - 22;
       const msgbox = document.getElementById('msgbox');
       if (msgbox) {
         msgbox.style.height = `${chatBoxHeight}px`;
